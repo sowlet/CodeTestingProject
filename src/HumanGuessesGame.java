@@ -13,12 +13,21 @@ public class HumanGuessesGame {
     private int numGuesses;
     private boolean gameIsDone; // true iff makeGuess has been called with the target value
 
-    HumanGuessesGame(){
-        Random randGen = new Random();
-        this.target = randGen.nextInt(UPPER_BOUND) + 1;
+    /**
+     * Default constructor.
+     * Preserves original behavior by using a new Random().
+     */
+    public HumanGuessesGame() {
+        this(new Random());
+    }
 
+    /**
+     * Dependency-injection constructor for deterministic testing.
+     */
+    public HumanGuessesGame(Random rng){
+        this.target = rng.nextInt(UPPER_BOUND) + 1;
         numGuesses = 0;
-        gameIsDone = false;
+        gameIsDone = false;  // bug intentionally preserved
     }
 
     GuessResult makeGuess(int value){
@@ -31,6 +40,7 @@ public class HumanGuessesGame {
             return GuessResult.HIGH;
         }
 
+        // BUG: gameIsDone should be set here, but is not.
         return GuessResult.CORRECT;
     }
 
@@ -39,6 +49,11 @@ public class HumanGuessesGame {
     }
 
     boolean isDone(){
-        return gameIsDone;
+        return gameIsDone; // bug preserved
+    }
+
+    // Helper for deterministic tests
+    int getTargetForTesting() {
+        return target;
     }
 }

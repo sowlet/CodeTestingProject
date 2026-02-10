@@ -5,25 +5,17 @@ import java.util.function.Consumer;
 /**
  * UI screen for when the computer is guessing a number
  *
- * Displays the computer's guesses and processes human's answers
- * Tracks the computer's guesses
+ * Displays the computer's guesses and processes human's answers.
+ * Delegates guessing logic to ComputerGuessesGame to keep UI simple.
  *
  * TODO: refactor this class
  */
 public class ComputerGuessesPanel extends JPanel {
 
-    private int numGuesses;
-    private int lastGuess;
-
-    // upperBound and lowerBound track the computer's knowledge about the correct number
-    // They are updated after each guess is made
-    private int upperBound; // correct number is <= upperBound
-    private int lowerBound; // correct number is >= lowerBound
+    private final ComputerGuessesGame game;
 
     public ComputerGuessesPanel(JPanel cardsPanel, Consumer<GameResult> gameFinishedCallback){
-        numGuesses = 0;
-        upperBound = 1000;
-        lowerBound = 1;
+        this.game = new ComputerGuessesGame();
 
         this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
@@ -41,7 +33,7 @@ public class ComputerGuessesPanel extends JPanel {
 
         JButton lowerBtn = new JButton("Lower");
         lowerBtn.addActionListener(e -> {
-            processLowerGuess();
+            game.applyLower();
             processNextGuess(guessMessage);
         });
         this.add(lowerBtn);
@@ -53,7 +45,7 @@ public class ComputerGuessesPanel extends JPanel {
             guessMessage.setText("I guess ___.");
 
             // Send the result of the finished game to the callback
-            GameResult result = new GameResult(false, lastGuess, numGuesses);
+            GameResult result = new GameResult(false, game.getLastGuess(), game.getNumGuesses());
             gameFinishedCallback.accept(result);
 
             CardLayout cardLayout = (CardLayout) cardsPanel.getLayout();
@@ -65,61 +57,27 @@ public class ComputerGuessesPanel extends JPanel {
 
         JButton higherBtn = new JButton("Higher");
         higherBtn.addActionListener(e -> {
-            processHigherGuess();
+            game.applyHigher();
             processNextGuess(guessMessage);
         });
         this.add(higherBtn);
         higherBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-
         this.addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentShown(java.awt.event.ComponentEvent e) {
-                resetGame();
-                lastGuess = calculateNextGuess();
-                guessMessage.setText("I guess " + lastGuess + ".");
+                // Reset non-UI game state when this screen is shown
+                game.reset();
+                int firstGuess = game.initialGuess();
+                guessMessage.setText("I guess " + firstGuess + ".");
             }
         });
     }
 
     /**
      * Process the next guess after clicking the Higher or Lower buttons.
-     * @param guessMessage the guess message JLabel to update
      */
     private void processNextGuess(JLabel guessMessage) {
-        lastGuess = calculateNextGuess();
-        numGuesses += 1;
-        guessMessage.setText("I guess " + lastGuess + ".");
+        int next = game.nextGuess();
+        guessMessage.setText("I guess " + next + ".");
     }
-
-    /**
-     * Processes a "lower" response, updating the upper bound
-     */
-    private void processLowerGuess() {
-        upperBound = Math.min(upperBound, lastGuess);
-    }
-
-    /**
-     * Processes a "higher" response, updating the lower bound
-     */
-    private void processHigherGuess() {
-        lowerBound = Math.max(lowerBound, lastGuess + 1);
-    }
-
-    /**
-     * Calculates the next guess using binary search
-     * @return the next guess value
-     */
-    private int calculateNextGuess() {
-        return (lowerBound + upperBound + 1) / 2;
-    }
-
-    /**
-     * Resets the game state to initial values
-     */
-    private void resetGame() {
-        numGuesses = 0;
-        upperBound = 1000;
-        lowerBound = 1;
-    }
-
 }

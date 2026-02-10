@@ -12,10 +12,9 @@ public class StatsPanel extends JPanel {
 
     private final JPanel resultsPanel;
 
-    // Stats will display the number of games in each "bin"
-    // A bin goes from BIN_EDGES[i] through BIN_EDGES[i+1]-1, inclusive
+    // A bin goes from BIN_EDGES[i] through BIN_EDGES[i+1]-1, inclusive (per original comment)
     private static final int [] BIN_EDGES = {1, 2, 4, 6, 8, 10, 12, 14};
-    private ArrayList<JLabel> resultsLabels;
+    private final ArrayList<JLabel> resultsLabels;
 
     public StatsPanel(JPanel cardsPanel) {
 
@@ -36,10 +35,10 @@ public class StatsPanel extends JPanel {
         resultsPanel.setLayout(new GridLayout(0, 2));
         resultsPanel.add(new JLabel("Guesses"));
         resultsPanel.add(new JLabel("Games"));
+
         for(int binIndex=0; binIndex<BIN_EDGES.length; binIndex++){
             String binName;
             if(binIndex == BIN_EDGES.length-1){
-                // last bin
                 binName = BIN_EDGES[binIndex] + " or more";
             }
             else{
@@ -67,7 +66,6 @@ public class StatsPanel extends JPanel {
 
         JButton quit = new JButton("Back to Home");
         quit.addActionListener(e -> {
-            // See itemStateChanged in https://docs.oracle.com/javase/tutorial/uiswing/examples/layout/CardLayoutDemoProject/src/layout/CardLayoutDemo.java
             CardLayout cardLayout = (CardLayout) cardsPanel.getLayout();
             cardLayout.show(cardsPanel, ScreenID.HOME.name());
         });
@@ -83,7 +81,6 @@ public class StatsPanel extends JPanel {
         });
     }
 
-
     private void clearResults(){
         for(JLabel lbl : resultsLabels){
             lbl.setText("--");
@@ -94,43 +91,10 @@ public class StatsPanel extends JPanel {
         clearResults();
 
         GameStats stats = new StatsFile();
-        int[] binCounts = calculateBinCounts(stats);
+        int[] binCounts = StatsBinner.calculateBinCounts(stats, BIN_EDGES);
 
         for(int binIndex=0; binIndex<BIN_EDGES.length; binIndex++){
-            JLabel resultLabel = resultsLabels.get(binIndex);
-            resultLabel.setText(Integer.toString(binCounts[binIndex]));
+            resultsLabels.get(binIndex).setText(Integer.toString(binCounts[binIndex]));
         }
-    }
-
-    /**
-     * Calculates the number of games in each bin based on the stats
-     * @param stats the game statistics
-     * @return an array of counts, one for each bin
-     */
-    private int[] calculateBinCounts(GameStats stats) {
-        int[] binCounts = new int[BIN_EDGES.length];
-
-        for(int binIndex=0; binIndex<BIN_EDGES.length; binIndex++){
-            final int lowerBound = BIN_EDGES[binIndex];
-            int numGames = 0;
-
-            if(binIndex == BIN_EDGES.length-1){
-                // last bin
-                // Sum all the results from lowerBound on up
-                for(int numGuesses=lowerBound; numGuesses<stats.maxNumGuesses(); numGuesses++){
-                    numGames += stats.numGames(numGuesses);
-                }
-            }
-            else{
-                int upperBound = BIN_EDGES[binIndex+1];
-                for(int numGuesses=lowerBound; numGuesses <= upperBound; numGuesses++) {
-                    numGames += stats.numGames(numGuesses);
-                }
-            }
-
-            binCounts[binIndex] = numGames;
-        }
-
-        return binCounts;
     }
 }

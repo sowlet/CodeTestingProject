@@ -1,8 +1,6 @@
-import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -18,18 +16,25 @@ import java.util.TreeMap;
 public class StatsFile extends GameStats {
     public static final String FILENAME = "guess-the-number-stats.csv";
 
+    // maps number of guesses -> number of games within the past 30 days
+    private final SortedMap<Integer, Integer> statsMap;
 
-    // maps the number of guesses required to the number of games within
-    // the past 30 days where the person took that many guesses
-    private SortedMap<Integer, Integer> statsMap;
+    /**
+     * Default constructor uses the real CSV file and the current time.
+     */
+    public StatsFile() {
+        this(new CsvStatsRowSource(FILENAME), LocalDateTime.now());
+    }
 
-    public StatsFile(){
+    /**
+     * Injectable constructor for unit tests (no file required).
+     */
+    public StatsFile(StatsRowSource rowSource, LocalDateTime now) {
         statsMap = new TreeMap<>();
-        LocalDateTime limit = LocalDateTime.now().minusDays(30);
+        LocalDateTime limit = now.minusDays(30);
 
-        try (CSVReader csvReader = new CSVReader(new FileReader(FILENAME))) {
-            String[] values = null;
-            while ((values = csvReader.readNext()) != null) {
+        try {
+            for (String[] values : rowSource.readRows()) {
                 // values should have the date and the number of guesses as the two fields
                 processStatsRow(values, limit);
             }
@@ -39,15 +44,17 @@ public class StatsFile extends GameStats {
         } catch (IOException e) {
             // NOTE: In a full implementation, we would log this error and alert the user
             // NOTE: For this project, you do not need unit tests for handling this exception.
+        } catch (Exception e) {
+            // Keep behavior conservative: ignore unexpected row-source failures here.
+            // Unit tests can directly test processStatsRow for formatting exceptions.
         }
     }
 
     /**
-     * Processes a single row from the stats file
-     * @param values the CSV row values
-     * @param limit the time limit for including stats
+     * Processes a single row from the stats file.
+     * Leaves formatting exceptions unhandled, as in the starter code.
      */
-    private void processStatsRow(String[] values, LocalDateTime limit) {
+    void processStatsRow(String[] values, LocalDateTime limit) {
         try {
             LocalDateTime timestamp = LocalDateTime.parse(values[0]);
             int numGuesses = Integer.parseInt(values[1]);
@@ -77,18 +84,15 @@ public class StatsFile extends GameStats {
     }
 
     /**
-     * Writes a game result to the stats file if the human was playing
-     * @param result the game result to write
+     * Writes a game result to the stats file if the human was playing.
+     * NOTE: Not required to unit test.
      */
     public static void writeGameResult(GameResult result) {
         if(result.humanWasPlaying){
-            // write stats to file
             try(CSVWriter writer = new CSVWriter(new FileWriter(FILENAME, true))) {
-
                 String [] record = new String[2];
                 record[0] = LocalDateTime.now().toString();
                 record[1] = Integer.toString(result.numGuesses);
-
                 writer.writeNext(record);
             } catch (IOException e) {
                 // NOTE: In a full implementation, we would log this error and possibly alert the user
