@@ -42,9 +42,7 @@ public class ComputerGuessesPanel extends JPanel {
         JButton lowerBtn = new JButton("Lower");
         lowerBtn.addActionListener(e -> {
             processLowerGuess();
-            lastGuess = calculateNextGuess();
-            numGuesses += 1;
-            guessMessage.setText("I guess " + lastGuess + ".");
+            processNextGuess(guessMessage);
         });
         this.add(lowerBtn);
         lowerBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -68,9 +66,7 @@ public class ComputerGuessesPanel extends JPanel {
         JButton higherBtn = new JButton("Higher");
         higherBtn.addActionListener(e -> {
             processHigherGuess();
-            lastGuess = calculateNextGuess();
-            numGuesses += 1;
-            guessMessage.setText("I guess " + lastGuess + ".");
+            processNextGuess(guessMessage);
         });
         this.add(higherBtn);
         higherBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -83,6 +79,16 @@ public class ComputerGuessesPanel extends JPanel {
                 guessMessage.setText("I guess " + lastGuess + ".");
             }
         });
+    }
+
+    /**
+     * Process the next guess after clicking the Higher or Lower buttons.
+     * @param guessMessage the guess message JLabel to update
+     */
+    private void processNextGuess(JLabel guessMessage) {
+        lastGuess = calculateNextGuess();
+        numGuesses += 1;
+        guessMessage.setText("I guess " + lastGuess + ".");
     }
 
     /**
