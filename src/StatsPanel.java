@@ -94,6 +94,21 @@ public class StatsPanel extends JPanel {
         clearResults();
 
         GameStats stats = new StatsFile();
+        int[] binCounts = calculateBinCounts(stats);
+
+        for(int binIndex=0; binIndex<BIN_EDGES.length; binIndex++){
+            JLabel resultLabel = resultsLabels.get(binIndex);
+            resultLabel.setText(Integer.toString(binCounts[binIndex]));
+        }
+    }
+
+    /**
+     * Calculates the number of games in each bin based on the stats
+     * @param stats the game statistics
+     * @return an array of counts, one for each bin
+     */
+    private int[] calculateBinCounts(GameStats stats) {
+        int[] binCounts = new int[BIN_EDGES.length];
 
         for(int binIndex=0; binIndex<BIN_EDGES.length; binIndex++){
             final int lowerBound = BIN_EDGES[binIndex];
@@ -113,8 +128,9 @@ public class StatsPanel extends JPanel {
                 }
             }
 
-            JLabel resultLabel = resultsLabels.get(binIndex);
-            resultLabel.setText(Integer.toString(numGames));
+            binCounts[binIndex] = numGames;
         }
+
+        return binCounts;
     }
 }

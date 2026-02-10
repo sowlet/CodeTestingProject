@@ -1,7 +1,9 @@
 import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -29,22 +31,7 @@ public class StatsFile extends GameStats {
             String[] values = null;
             while ((values = csvReader.readNext()) != null) {
                 // values should have the date and the number of guesses as the two fields
-                try {
-                    LocalDateTime timestamp = LocalDateTime.parse(values[0]);
-                    int numGuesses = Integer.parseInt(values[1]);
-
-                    if (timestamp.isAfter(limit)) {
-                        statsMap.put(numGuesses, 1 + statsMap.getOrDefault(numGuesses, 0));
-                    }
-                }
-                catch(NumberFormatException nfe){
-                    // NOTE: In a full implementation, we would log this error and possibly alert the user
-                    throw nfe;
-                }
-                catch(DateTimeParseException dtpe){
-                    // NOTE: In a full implementation, we would log this error and possibly alert the user
-                    throw dtpe;
-                }
+                processStatsRow(values, limit);
             }
         } catch (CsvValidationException e) {
             // NOTE: In a full implementation, we would log this error and alert the user
@@ -52,6 +39,30 @@ public class StatsFile extends GameStats {
         } catch (IOException e) {
             // NOTE: In a full implementation, we would log this error and alert the user
             // NOTE: For this project, you do not need unit tests for handling this exception.
+        }
+    }
+
+    /**
+     * Processes a single row from the stats file
+     * @param values the CSV row values
+     * @param limit the time limit for including stats
+     */
+    private void processStatsRow(String[] values, LocalDateTime limit) {
+        try {
+            LocalDateTime timestamp = LocalDateTime.parse(values[0]);
+            int numGuesses = Integer.parseInt(values[1]);
+
+            if (timestamp.isAfter(limit)) {
+                statsMap.put(numGuesses, 1 + statsMap.getOrDefault(numGuesses, 0));
+            }
+        }
+        catch(NumberFormatException nfe){
+            // NOTE: In a full implementation, we would log this error and possibly alert the user
+            throw nfe;
+        }
+        catch(DateTimeParseException dtpe){
+            // NOTE: In a full implementation, we would log this error and possibly alert the user
+            throw dtpe;
         }
     }
 
@@ -63,5 +74,26 @@ public class StatsFile extends GameStats {
     @Override
     public int maxNumGuesses(){
         return (statsMap.isEmpty() ? 0 : statsMap.lastKey());
+    }
+
+    /**
+     * Writes a game result to the stats file if the human was playing
+     * @param result the game result to write
+     */
+    public static void writeGameResult(GameResult result) {
+        if(result.humanWasPlaying){
+            // write stats to file
+            try(CSVWriter writer = new CSVWriter(new FileWriter(FILENAME, true))) {
+
+                String [] record = new String[2];
+                record[0] = LocalDateTime.now().toString();
+                record[1] = Integer.toString(result.numGuesses);
+
+                writer.writeNext(record);
+            } catch (IOException e) {
+                // NOTE: In a full implementation, we would log this error and possibly alert the user
+                // NOTE: For this project, you do not need unit tests for handling this exception.
+            }
+        }
     }
 }

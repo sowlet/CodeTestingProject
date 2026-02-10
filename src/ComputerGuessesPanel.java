@@ -41,11 +41,8 @@ public class ComputerGuessesPanel extends JPanel {
 
         JButton lowerBtn = new JButton("Lower");
         lowerBtn.addActionListener(e -> {
-            upperBound = Math.min(upperBound, lastGuess);
-
-            lastGuess = (lowerBound + upperBound + 1) / 2;
-            numGuesses += 1;
-            guessMessage.setText("I guess " + lastGuess + ".");
+            processLowerGuess();
+            processNextGuess(guessMessage);
         });
         this.add(lowerBtn);
         lowerBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -68,11 +65,8 @@ public class ComputerGuessesPanel extends JPanel {
 
         JButton higherBtn = new JButton("Higher");
         higherBtn.addActionListener(e -> {
-            lowerBound = Math.max(lowerBound, lastGuess + 1);
-
-            lastGuess = (lowerBound + upperBound + 1) / 2;
-            numGuesses += 1;
-            guessMessage.setText("I guess " + lastGuess + ".");
+            processHigherGuess();
+            processNextGuess(guessMessage);
         });
         this.add(higherBtn);
         higherBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -80,14 +74,52 @@ public class ComputerGuessesPanel extends JPanel {
 
         this.addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentShown(java.awt.event.ComponentEvent e) {
-                numGuesses = 0;
-                upperBound = 1000;
-                lowerBound = 1;
-
-                lastGuess = (lowerBound + upperBound + 1) / 2;
+                resetGame();
+                lastGuess = calculateNextGuess();
                 guessMessage.setText("I guess " + lastGuess + ".");
             }
         });
+    }
+
+    /**
+     * Process the next guess after clicking the Higher or Lower buttons.
+     * @param guessMessage the guess message JLabel to update
+     */
+    private void processNextGuess(JLabel guessMessage) {
+        lastGuess = calculateNextGuess();
+        numGuesses += 1;
+        guessMessage.setText("I guess " + lastGuess + ".");
+    }
+
+    /**
+     * Processes a "lower" response, updating the upper bound
+     */
+    private void processLowerGuess() {
+        upperBound = Math.min(upperBound, lastGuess);
+    }
+
+    /**
+     * Processes a "higher" response, updating the lower bound
+     */
+    private void processHigherGuess() {
+        lowerBound = Math.max(lowerBound, lastGuess + 1);
+    }
+
+    /**
+     * Calculates the next guess using binary search
+     * @return the next guess value
+     */
+    private int calculateNextGuess() {
+        return (lowerBound + upperBound + 1) / 2;
+    }
+
+    /**
+     * Resets the game state to initial values
+     */
+    private void resetGame() {
+        numGuesses = 0;
+        upperBound = 1000;
+        lowerBound = 1;
     }
 
 }
